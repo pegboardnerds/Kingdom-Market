@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="database.js"></script>
+    <script src="jq.js"></script>
+    <script src="tools.js"></script>
+    <script src="loginform.js"></script>
+    <script src="accounts.js"></script>
+    <script src="newitem.js"></script>
+    <script src="displayitem.js"></script>
+    <script src="getlogin.js"></script>
+    <script src="appendPost.js"></script>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body onload="onResize()" onresize="onResize()" style="background-color: #191919;">
+    <div style="display: block; background-color:rgb(48, 43, 43); position: fixed;
+    top: 0; left: 0; width: 100%; height: 40px; z-index: 15;" id="searchholder">
+        <input id="search" style="position: relative; width: 200px; border-radius: 40px; height: 30px; font-size: 110%;
+         outline-width: 0; text-align: left; padding-left: 15px; border:0px; background-color: #2E2E2E;
+         color:white; margin-top: 5px;" type="text" placeholder="Search">
+        <button id="addlisting" style="margin-left: 10px; font-size: 110%; display: none;
+         border-radius: 10px; background-color: #2E2E2E;  color: white; border: 0px;" onclick="addNewItem()">Add
+            Listing</button>
+            <button id="about" style="margin-left: 10px; font-size: 110%;
+            border-radius: 10px; background-color: #2E2E2E;color: white; border: 0px;" onclick="">About</button>
+             <button id="beapart" style="margin-left: 10px; font-size: 110%;
+             border-radius: 10px; background-color: #2E2E2E;color: white; border: 0px;" onclick="">Develop</button>
+        <button id="seeyourlistings" style="margin-left: 10px; font-size: 110%; display: none;
+        border-radius: 10px; background-color: #2E2E2E;color: white; border: 0px;" onclick="showYours()">Yours</button>
+        <button id="btnlogin" style="position: relative; border: none; font-size: 100%;
+          border-radius: 10px; border: 0; color: white; margin-left: 10px; background-color: #2E2E2E;" id="login"
+            onclick="getLogin()">Login</button>
+    </div>
+    </div>
+    <div id="news" style="display: none; border-radius: 10px;">
+        <div style="width: 100%; height: 100px;">
+            <p style="text-align: center; font-size: 150%;">Incoming and current events.</p>
+        </div>
+    </div>
+    <div id=itemsholders>
+        <div style="width: 100%; position:  relative; top:5px; padding-bottom: 10px;">
+            <p style="font-size: 140%;
+        color: white; text-align: center; border-radius: 10px; background-color: #2E2E2E">Products and services being
+                offered by other christians.</p>
+        </div>
+    </div>
+    <div id="posts" style="display: inline-block; border-radius: 10px; display: none;"></div>
+    <div id="context" style="display: none;"></div>
+    <script>
+        var _user_ = new Object;
+        var _logincheck = 0;
+        var sizer = 10;
+        getData();
+        getPost();
+        document.getElementById("search").onkeypress = function (event) {
+            if (event.keyCode == 13) {
+                if (isEmpty(getel("search").value)) { Reset(); showAll(); }
+                Reset();
+                showMatching(document.getElementById("search").value);
+            }
+        }
+        function showYours() {
+            Reset();
+            showMatching(_user_[0]);
+        }
+        async function uploadFile(file) {
+            let formData = new FormData();
+            formData.append("file", file);
+            await fetch('upload.php', {
+                method: "POST",
+                body: formData
+            });
+        }
+        function Reset() {
+            var listings = document.getElementsByClassName("listing");
+            if (listings.length > 0) { listings[0].remove(); Reset(); }
+        }
+        function createUser(username, password) {
+            _user_ = createNewUser(username, password);
+            _logincheck = 0;
+            checkForSignUp();
+        }
+        function checkForSignUp() {
+            var msg = document.getElementById("errortext");
+            if (_logincheck <= 5) {
+                if (_user_[0] == undefined) {
+                    msg.style.color = "red";
+                    msg.innerHTML = "Attempting to create account. " + _logincheck;
+                } else {
+                    msg.style.color = "green";
+                    msg.innerHTML = "Success";
+                    enableUserFunction();
+                }
+                _logincheck++;
+                setTimeout(function () { checkForSignUp() }, 1000);
+            } else {
+                if (_user_[0] == undefined) {
+                    msg.style.color = "red";
+                    msg.innerHTML = "A user by that name already exists or network error.";
+                    _logincheck = 0;
+                    return;
+                } else {
+                    msg.style.color = "green";
+                    msg.innerHTML = "Success";
+                    enableUserFunction();
+                }
+            }
+        }
+        function checkForLogin() {
+            var msg = document.getElementById("errortext");
+            if (_logincheck <= 5) {
+                if (_user_[0] == undefined) {
+                    msg.style.color = "red";
+                    msg.innerHTML = "Attempting to log in " + _logincheck;
+                } else {
+                    msg.style.color = "green";
+                    msg.innerHTML = "Success";
+                    enableUserFunction();
+                }
+                _logincheck++;
+                setTimeout(function () { checkForLogin() }, 1000);
+            } else {
+                if (_user_[0] == undefined) {
+                    msg.style.color = "red";
+                    msg.innerHTML = "Credentials incorrect or network issues.";
+                    _logincheck = 0;
+                    return;
+                } else {
+                    msg.style.color = "green";
+                    msg.innerHTML = "Success";
+                    enableUserFunction();
+                }
+            }
+        }
+        function enableUserFunction() {
+            document.getElementById("addlisting").style.display = "inline-block";
+            document.getElementById("seeyourlistings").style.display = "inline-block";
+            document.getElementById("lgsu").style.display = "none";
+            document.getElementById("blackout").style.display = "none";
+            document.getElementById("btnlogin").style.display = "none";
+
+        }
+        doublechecking = false;
+        function onResize() {
+            if (window.innerWidth > 600) {
+                document.getElementById("itemsholders").style.height = window.innerHeight-
+                document.getElementById("searchholder").offsetHeight-15+"px";
+                document.getElementById("itemsholders").style.width = "660px";
+                if (document.getElementById("itemsholders").offsetWidth +
+                    document.getElementById("posts").offsetWidth +
+                    document.getElementById("news").offsetWidth > window.innerWidth) {
+                    document.getElementById("news").style.display = "none";
+                } else {
+                    document.getElementById("news").style.display = "block";
+                    document.getElementById("posts").style.display = "block";
+                    var p = document.getElementById("posts");
+                    p.style.position = "absolute";
+                    p.style.width = "440px";
+                    p.style.top = "40px";
+                    p.style.height = "100%";
+                    p.style.left = "677.5px";
+                    document.getElementById("itemsholders").style.width = "660px";
+                    document.getElementById("itemsholders").style.height = window.innerHeight-
+                document.getElementById("searchholder").offsetHeight+"px";
+                }
+                if (document.getElementById("itemsholders").offsetWidth +
+                    document.getElementById("posts").offsetWidth > window.innerWidth) {
+                    document.getElementById("posts").style.position = "static";
+                }
+            } else {
+                document.getElementById("news").style.display = "none";
+                document.getElementById("search").placeholder = "Search";
+                document.getElementById("itemsholders").style.height = "100%";
+                document.getElementById("itemsholders").style.width = "100%";
+                document.getElementById("posts").style.display = "block";
+                document.getElementById("posts").style.position = "static";
+                document.getElementById("posts").style.width = "100%";
+                document.getElementById("posts").style.marginTop = "10px";
+                document.getElementById("posts").style.height = "auto";
+                document.getElementById("search").style.width = "70px";
+                document.getElementById("itemsholders").style.paddingBottom = 10+"px";
+            }
+            if (doublechecking) { doublechecking = false; return; }
+            setTimeout(() => {
+                doublechecking = true;
+                onResize();
+            }, 1000);
+        }
+    </script>
+</body>
+
+</html>
