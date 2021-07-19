@@ -4,9 +4,9 @@ function getLogin() {
     var form = getLoginForm();
     if (window.innerWidth <= 600) {
         form.style.width = "100%";
-        form.style.bottom = -form.offsetHeight+"px";
+        form.style.top = $(window).height()+window.scrollY+"px";
         form.style.transition = "all 500ms";
-        form.style.bottom = -(form.offsetHeight-form.offsetHeight)+"px";
+        form.style.top = form.offsetTop-form.offsetHeight+"px";
     } else {
         t = window.innerWidth; f = form.offsetWidth; r = t - f; form.style.left = r / 2 + "px";
         t = window.innerHeight; f = form.offsetHeight; r = t - f; form.style.top = (r / 2) + "px";
@@ -60,7 +60,7 @@ function getLogin() {
     form.appendChild(errortext);
     errortext.style.display = "none";
     errortext.id = "errortext";
-    errortext.innerHTML = "Enter your details and log in.";
+    errortext.innerHTML = "Login/Signup. Your details are sha256 hashed.";
     errortext.style.display = "block";
     errortext.style.color = "green";
 
@@ -113,5 +113,20 @@ function getLogin() {
     }
     signup.onmouseleave = function () {
         signup.style.backgroundColor = "white";
+    }
+   var p = document.createElement("p");
+    p.innerHTML = "see what your password looks like to us.";
+    form.appendChild(p);
+    p.style.color = "white";
+    p.style.fontStyle = "italic";
+    p.style.textDecoration = "underline";
+    p.style.marginTop = "30px";
+    p.style.cursor = "pointer";
+    p.onclick = function(){
+        if(!HasLetters(password.value)&&(!HasNumbers(password.value))){
+            alert("Enter text into password field then retry.");
+            return;
+        }
+        alert("This is what your password will look like in our database: "+SHA256(password.value))
     }
 }

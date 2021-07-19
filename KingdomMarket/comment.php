@@ -1,11 +1,11 @@
 <?php
-$myFile = "posts.json";
+$myFile = 'postcomments/'.$_GET['path'];
 $stringData = $_GET["data"];
-$commentsfile = $_GET['comid'];
 $contents;
 
-$myfile = fopen("posts.json", "r") or die("Unable to open file!");
-if(!(filesize("posts.json")<=0)){$contents = fread($myfile, filesize("posts.json"));}
+if(!file_exists($myFile)){fopen($myFile);fclose($myFile);}
+$myfile = fopen($myFile, "r") or die("Unable to open file!");
+if(!(filesize($myFile)<=0)){$contents = fread($myfile, filesize($myFile));}
 fclose($myfile);
 if ($contents != null) {
     $contents = str_replace("]", ",",$contents);
@@ -19,6 +19,5 @@ if ($contents != null) {
     fwrite($fh, '['.$stringData.']');
     fclose($fh);
 }
-$fp = fopen($commentsfile, 'w');
-fclose($fp);
+
 ?>

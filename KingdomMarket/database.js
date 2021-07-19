@@ -27,7 +27,6 @@ function getCount() {
   return x;
 }
 function sendLis(listing) {
-  console.log(listing);
   $.ajax
     ({
       type: "GET",
@@ -35,7 +34,7 @@ function sendLis(listing) {
       async: true,
       caches: false,
       url: 'overrite_json.php',
-      data: { data: JSON.stringify(listing) },
+      data: { data: JSON.stringify(listing), comid:"postcomments/"+listing["reference"]+".json"},
       success: function () { updating = true; },
       failure: function () { },
       complete: function () { updating = false; }
@@ -145,11 +144,10 @@ function newProduct(image, name, cost, details, sellerid, sellerusername) {
   item.name = name;
   item.cost = cost;
   item.details = details;
-  item.reference = getReferenceNumber();
+  item.reference = sellerusername+Date.now();
   item.sellerid = sellerid;
   item.datecreated = new Date().toLocaleString().replace(',', '');
   item.sellerusername = sellerusername;
-  console.log(1+" "+item);
   sendLis(item);
 }
 

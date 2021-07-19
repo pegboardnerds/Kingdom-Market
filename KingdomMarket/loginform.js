@@ -20,9 +20,9 @@ function getLoginForm(){
     blackout.style.top = "0";
     blackout.style.left = "0";
     blackout.style.width = "100%";
-    blackout.style.height = "100%";
+    blackout.style.height = $(window).height()+window.scrollY+"px";
     blackout.style.backgroundColor = "black";
-    blackout.style.opacity = "70%";
+    blackout.style.opacity = "80%";
     blackout.style.zIndex = "50";
     blackout.id = "blackout";
     blackout.onclick = function(){

@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script src="database.js"></script>
+    <title>Kingdom-Market</title>
     <script src="jq.js"></script>
+    <script src="database.js"></script>
     <script src="tools.js"></script>
     <script src="loginform.js"></script>
     <script src="accounts.js"></script>
@@ -15,27 +15,34 @@
     <script src="displayitem.js"></script>
     <script src="getlogin.js"></script>
     <script src="appendPost.js"></script>
+    <script src="focus.js"></script>
+    <script src="notifications.js"></script>
     <link rel="stylesheet" href="index.css">
 </head>
 
 <body onload="onResize()" onresize="onResize()" style="background-color: #191919;">
     <div style="display: block; background-color:rgb(48, 43, 43); position: fixed;
     top: 0; left: 0; width: 100%; height: 40px; z-index: 15;" id="searchholder">
+    <button class="navb" id="profile" style="margin-left: 10px; font-size: 110%; display: none;
+    border-radius: 10px; background-color: #2E2E2E;  color: white; border: 0px;" onclick="expandNotifications()">You</button>
         <input id="search" style="position: relative; width: 200px; border-radius: 40px; height: 30px; font-size: 110%;
-         outline-width: 0; text-align: left; padding-left: 15px; border:0px; background-color: #2E2E2E;
+         outline-width: 0; margin-left: 10px;  text-align: left; padding-left: 15px; border:0px; background-color: #2E2E2E;
          color:white; margin-top: 5px;" type="text" placeholder="Search">
-        <button id="addlisting" style="margin-left: 10px; font-size: 110%; display: none;
+        <button class="navb" id="addlisting" style="margin-left: 10px; font-size: 110%; display: none;
          border-radius: 10px; background-color: #2E2E2E;  color: white; border: 0px;" onclick="addNewItem()">Add
             Listing</button>
-            <button id="about" style="margin-left: 10px; font-size: 110%;
-            border-radius: 10px; background-color: #2E2E2E;color: white; border: 0px;" onclick="">About</button>
-             <button id="beapart" style="margin-left: 10px; font-size: 110%;
-             border-radius: 10px; background-color: #2E2E2E;color: white; border: 0px;" onclick="">Develop</button>
-        <button id="seeyourlistings" style="margin-left: 10px; font-size: 110%; display: none;
+            <button class="navb" id="about" style="margin-left: 10px; font-size: 110%;
+            border-radius: 10px; background-color: #2E2E2E;color: white; border: 0px; display: none;" onclick="">About</button>
+             <a href="https://github.com/pegboardnerds/Kingdom-Market"><button id="beapart" style="margin-left: 10px; font-size: 110%;
+             border-radius: 10px; background-color: #2E2E2E;color: white; border: 0px; display: none;" onclick="">Develop</button></a>
+        <button class="navb" id="seeyourlistings" style="margin-left: 10px; font-size: 110%; display: none;
         border-radius: 10px; background-color: #2E2E2E;color: white; border: 0px;" onclick="showYours()">Yours</button>
-        <button id="btnlogin" style="position: relative; border: none; font-size: 100%;
+        <button class="navb" id="btnlogin" style="position: relative; border: none; font-size: 100%;
           border-radius: 10px; border: 0; color: white; margin-left: 10px; background-color: #2E2E2E;" id="login"
             onclick="getLogin()">Login</button>
+            <button class="navb" id="stopplaying" style="position: relative; border: none; font-size: 100%;
+          border-radius: 10px; border: 0; display: none; color: white; margin-left: 10px; background-color: #2E2E2E;" id="stopplaying"
+            onclick="StopPlayer()">Stop</button>
     </div>
     </div>
     <div id="news" style="display: none; border-radius: 10px;">
@@ -52,10 +59,14 @@
     </div>
     <div id="posts" style="display: inline-block; border-radius: 10px; display: none;"></div>
     <div id="context" style="display: none;"></div>
+    <audio id="notifysound" src="alert.wav"></audio>
     <script>
         var _user_ = new Object;
         var _logincheck = 0;
         var sizer = 10;
+        let notificationcount = 0;
+        let darkblack = "#191919"
+        let lightblack = "#2E2E2E";
         getData();
         getPost();
         document.getElementById("search").onkeypress = function (event) {
@@ -64,7 +75,7 @@
                 Reset();
                 showMatching(document.getElementById("search").value);
             }
-        }
+        };
         function showYours() {
             Reset();
             showMatching(_user_[0]);
@@ -96,6 +107,7 @@
                     msg.style.color = "green";
                     msg.innerHTML = "Success";
                     enableUserFunction();
+                    return;
                 }
                 _logincheck++;
                 setTimeout(function () { checkForSignUp() }, 1000);
@@ -122,6 +134,7 @@
                     msg.style.color = "green";
                     msg.innerHTML = "Success";
                     enableUserFunction();
+                    return;
                 }
                 _logincheck++;
                 setTimeout(function () { checkForLogin() }, 1000);
@@ -138,42 +151,50 @@
                 }
             }
         }
+        function liveNotify(){
+            document.getElementById("profile").textContent = _user_[0];
+            setInterval(() => {
+                getNotifications(_user_[0]);
+            }, 5000); 
+            }
         function enableUserFunction() {
             document.getElementById("addlisting").style.display = "inline-block";
             document.getElementById("seeyourlistings").style.display = "inline-block";
             document.getElementById("lgsu").style.display = "none";
             document.getElementById("blackout").style.display = "none";
             document.getElementById("btnlogin").style.display = "none";
-
+            document.getElementById("profile").style.display = "inline-block";
+            liveNotify();
         }
         doublechecking = false;
         function onResize() {
-            if (window.innerWidth > 600) {
-                document.getElementById("itemsholders").style.height = window.innerHeight-
-                document.getElementById("searchholder").offsetHeight-15+"px";
+            if(window.innerWidth >(660+440+400)){
                 document.getElementById("itemsholders").style.width = "660px";
-                if (document.getElementById("itemsholders").offsetWidth +
-                    document.getElementById("posts").offsetWidth +
-                    document.getElementById("news").offsetWidth > window.innerWidth) {
-                    document.getElementById("news").style.display = "none";
-                } else {
-                    document.getElementById("news").style.display = "block";
-                    document.getElementById("posts").style.display = "block";
-                    var p = document.getElementById("posts");
-                    p.style.position = "absolute";
+                var p = document.getElementById("posts");
+                    p.style.position = "fixed";
                     p.style.width = "440px";
                     p.style.top = "40px";
                     p.style.height = "100%";
                     p.style.left = "677.5px";
-                    document.getElementById("itemsholders").style.width = "660px";
-                    document.getElementById("itemsholders").style.height = window.innerHeight-
-                document.getElementById("searchholder").offsetHeight+"px";
-                }
-                if (document.getElementById("itemsholders").offsetWidth +
-                    document.getElementById("posts").offsetWidth > window.innerWidth) {
-                    document.getElementById("posts").style.position = "static";
-                }
-            } else {
+                    document.getElementById("news").style.display = "block";
+                    document.getElementById("news").style.height=window.innerHeight-46+"px";
+                    document.getElementById("posts").style.display = "block";
+                    document.getElementById("itemsholders").style.height=window.innerHeight-41+"px";
+                    document.getElementById("about").style.display = "inline-block";
+                document.getElementById("beapart").style.display = "inline-block";
+            }
+            if(window.innerWidth<(660+440+400)&&window.innerWidth>(660+440)){
+                document.getElementById("itemsholders").style.width = "660px";
+                document.getElementById("news").style.display = "none";;
+                var p = document.getElementById("posts");
+                    p.style.display = "block";
+                    p.style.position = "fixed";
+                    p.style.width = "440px";
+                    p.style.top = "40px";
+                    p.style.height = "100%";
+                    p.style.left = "677.5px";
+            }
+            if(window.innerWidth<(660+440)){
                 document.getElementById("news").style.display = "none";
                 document.getElementById("search").placeholder = "Search";
                 document.getElementById("itemsholders").style.height = "100%";
@@ -184,7 +205,10 @@
                 document.getElementById("posts").style.marginTop = "10px";
                 document.getElementById("posts").style.height = "auto";
                 document.getElementById("search").style.width = "70px";
-                document.getElementById("itemsholders").style.paddingBottom = 10+"px";
+                document.getElementById("itemsholders").style.paddingBottom = 40+"px";
+                document.getElementById("itemsholders").style.position = "relative";
+                document.getElementById("about").style.display = "none";
+                document.getElementById("beapart").style.display = "none";
             }
             if (doublechecking) { doublechecking = false; return; }
             setTimeout(() => {

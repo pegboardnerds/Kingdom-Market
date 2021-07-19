@@ -24,7 +24,6 @@ overflow-x: hidden;
     position: fixed;
     right: 3px;
     width: 400px;
-    height: 100%;
     top: 45px;
     background-color: #2E2E2E;
     overflow-y: scroll;
@@ -36,12 +35,11 @@ color: white;
     position: fixed;
     width: 440px;
     top: 40px;
-    height: 100%;
+    height: auto;
     left: 677.5px;
-    overflow-y: scroll;
     padding-top: 0;
-overflow-x: hidden;
-background-color: transparent;
+    overflow-x: hidden;
+    background-color: transparent;
     
 }
 #itemsholders{
@@ -68,4 +66,11 @@ background-color: transparent;
   ::-webkit-scrollbar-thumb {
     background: transparent;
     border-radius: 10px;
+  }
+  .navb:hover{
+    transition: all 1s;
+    transform: scale(0.9);
+  }
+  .navb{
+    transition: all 1s;
   }

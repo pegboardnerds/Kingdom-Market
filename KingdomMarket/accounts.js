@@ -7,9 +7,9 @@ function returnUser(username,idS){
 function addToDatabase(username,password,userid){
     if(username==null){return;}
     user = new Object();
-    user.username = username;
+    user.username = SHA256(username);
     user.id = userid;
-    user.password = username;
+    user.password = SHA256(password);
     console.log(user);
     $.ajax
             ({
@@ -18,7 +18,7 @@ function addToDatabase(username,password,userid){
                 async: true,
                 caches: false,
                 url: 'save_json.php',
-                data: { data: JSON.stringify(user) },
+                data: { data: JSON.stringify(user), path:"notifications/"+username+".json"},
                 success: function () { },
                 failure: function () { }
             });
@@ -35,9 +35,9 @@ function getUser(username, password) {
         caches: false,
         success: function (data) {
             for(accounts in data){
-                if(data[accounts]["username"]!=username){continue;}
-                if(data[accounts]["password"]!=password){continue;}
-                returnUser(data[accounts]["username"],data[accounts]["id"]);
+                if(data[accounts]["username"]!=SHA256(username)){continue;}
+                if(data[accounts]["password"]!=SHA256(password)){continue;}
+                returnUser(username,data[accounts]["id"]);
                 return;
             }
             returnUser(null,null);

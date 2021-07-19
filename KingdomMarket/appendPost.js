@@ -1,5 +1,6 @@
 updating = false
 tries = 0;
+var playing;
 function appendPost(details) {
     var post = document.createElement("div");
     document.getElementById("posts").appendChild(post);
@@ -157,14 +158,14 @@ function appendPost(details) {
         }
         post.remove();
         if (hasphoto) {
-            listPost(hasphoto, filename, message.value, new Date().toLocaleString().replace(',', ''), _user_[0], true);
+            listPost(hasphoto, filename, message.value, new Date().toLocaleString().replace(',', ''), _user_[0], true,_user_[0]+Date.now());
         } else {
             if (HasLetters(yturl.value)) {
 
-                listPost(hasphoto, null, message.value + "embedyt" + yturl.value, new Date().toLocaleString().replace(',', ''), _user_[0], true);
+                listPost(hasphoto, null, message.value + "embedyt" + yturl.value, new Date().toLocaleString().replace(',', ''), _user_[0], true,_user_[0]+Date.now());
 
             } else {
-                listPost(hasphoto, null, message.value, new Date().toLocaleString().replace(',', ''), _user_[0], true);
+                listPost(hasphoto, null, message.value, new Date().toLocaleString().replace(',', ''), _user_[0], true,_user_[0]+Date.now());
 
             }
         }
@@ -172,7 +173,7 @@ function appendPost(details) {
     }
 }
 
-function listPost(haspicture, pictureurl, message, dateadded, owner, newpost) {
+function listPost(haspicture, pictureurl, message, dateadded, owner, newpost,id) {
 
     if (newpost) {
         postt = new Object();
@@ -186,7 +187,7 @@ function listPost(haspicture, pictureurl, message, dateadded, owner, newpost) {
         postt.message = message;
         postt.dateadded = dateadded;
         postt.owner = owner;
-        console.log(postt);
+        postt.id = id;
         sendData(postt);
         getPost();
         return;
@@ -194,6 +195,17 @@ function listPost(haspicture, pictureurl, message, dateadded, owner, newpost) {
 
     var postings = document.getElementById("posts");
     var post = document.createElement("div");
+    post.style.boxShadow = "0 0 2px brown";
+    post.onmouseenter = function(){
+        post.style.transition = "all 1s";
+        post.style.transform = "scale(0.9)";
+    }
+    post.onmouseleave = function(){
+        post.style.transition = "all 1s";
+        post.style.transform = "scale(1)";
+    }
+    post.style.cursor = "pointer";
+    post.id = id;
     post.classList.add("apost");
     postings.appendChild(post);
     document.getElementById("posts").appendChild(post);
@@ -306,9 +318,26 @@ function listPost(haspicture, pictureurl, message, dateadded, owner, newpost) {
         }
     }
     messagep.innerHTML = message;
+
+    var comments = document.createElement("div");
+    post.appendChild(comments);
+    comments.style.width = "100%";
+    comments.style.height = "auto";
+    var commentstext = document.createElement("p");
+    comments.appendChild(commentstext);
+    commentstext.innerHTML = "Comments";
+    commentstext.style.textAlign = "center";
+    commentstext.style.textDecoration = "underline";
+    commentstext.style.fontSize = "110%";
+    commentstext.style.color = "white";
+    commentstext.style.cursor = "pointer";
+    commentstext.onclick = function(){
+        showComments(post.id,owner);
+    }
 }
 
 function sendData(post) {
+    var id = post["id"];
     $.ajax
         ({
             type: "GET",
@@ -316,7 +345,7 @@ function sendData(post) {
             async: true,
             caches: false,
             url: 'appendposts.php',
-            data: { data: JSON.stringify(post) },
+            data: { data: JSON.stringify(post), comid: "postcomments/"+id+".json"},
             success: function () { updating = true; },
             failure: function () { },
             complete: function () { updating = false; }
@@ -340,7 +369,7 @@ function getPost() {
             x = 0;
             for (var i in data) { if (i == 0) { continue; } x++ }
             for (var p in data) {
-                listPost(data[x]["haspicture"], data[x]["url"], data[x]["message"], data[x]["dateadded"], data[x]["owner"], false);
+                listPost(data[x]["haspicture"], data[x]["url"], data[x]["message"], data[x]["dateadded"], data[x]["owner"], false,data[x]["id"]);
                 x--;
             }
         },
