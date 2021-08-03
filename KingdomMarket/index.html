@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kingdom-Market</title>
+    <script src="jq.js"></script>
+    <script src="database.js"></script>
+    <script src="tools.js"></script>
+    <script src="loginform.js"></script>
+    <script src="accounts.js"></script>
+    <script src="newitem.js"></script>
+    <script src="displayitem.js"></script>
+    <script src="getlogin.js"></script>
+    <script src="appendPost.js"></script>
+    <script src="focus.js"></script>
+    <script src="insert.js"></script>
+    <script src="notifications.js"></script>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body onresize="onResize()" onload="onResize()">
+    <div id=navbar style="background:#2e2a2a; width: 100%; height: 40px; border-radius: 10px;
+     z-index: 10; position: fixed;">
+        <button class="navb" id="profile" style="margin-left: 10px; font-size: 110%; display: none;
+    border-radius: 10px; background-color: #2E2E2E;  color: white; border: 0px;"
+            onclick="expandNotifications()">You</button>
+        <input id="search" style="position: relative; width: 200px; border-radius: 40px; height: 30px; font-size: 110%;
+         outline-width: 0; margin-left: 10px;  text-align: left; padding-left: 15px; border:0px; background-color: #2E2E2E;
+         color:white; margin-top: 5px;" type="text" placeholder="Search">
+        <button class="navb" id="addlisting" style="margin-left: 10px; font-size: 110%;
+         border-radius: 10px; background-color: #2E2E2E;  color: white; border: 0px;" onclick="addNewItem()">Add
+            Listing</button>
+        <button class="navb" id="about" style="margin-left: 10px; font-size: 110%;
+            border-radius: 10px; background-color: #2E2E2E;color: white; border: 0px; display: none;"
+            onclick="">About</button>
+        <a href="https://github.com/pegboardnerds/Kingdom-Market"><button id="beapart" style="margin-left: 10px; font-size: 110%;
+             border-radius: 10px; background-color: #2E2E2E;color: white; border: 0px; display: none;"
+                onclick="">Develop</button></a>
+        <button class="navb" id="seeyourlistings" style="margin-left: 10px; font-size: 110%; display: none;
+        border-radius: 10px; background-color: #2E2E2E;color: white; border: 0px;" onclick="showYours()">Yours</button>
+        <button class="navb" id="btnlogin" style="position: relative; border: none; font-size: 100%;
+          border-radius: 10px; border: 0; color: white; margin-left: 10px; background-color: #2E2E2E;" id="login"
+            onclick="getLogin()">Login</button>
+    </div>
+    <div id="body" style="width: 100%; background-color: #191919;"></div>
+    <div id="itemsholders"></div>
+    <div id="posts"></div>
+    <div id="extra">
+        <div id="extranavbar" style="width: 100%; height: 30px; background-color: #2e2a2a;
+        border-radius: 10px;">
+        <div class="menu" id="Charity" onclick="menuChose('Charity')">Charity</div>
+        <div class="menu" id="News" onclick="menuChose('News')">News</div>
+        <div class="menu" id="Donate" onclick="menuChose('Donate')">Donate</div>
+        </div>
+    </div>
+    <script>
+        let lockedupdate = false;
+        let lockedlistings = false;
+        var _user_ = new Object;
+        var _logincheck = 0;
+        var sizer = 10;
+        let notificationcount = 0;
+        let darkblack = "#191919"
+        let lightblack = "#2E2E2E";
+        let colors = new Object;
+        colors.darkbackground = "#191919";
+        colors.darkcard = "#2E2E2E";
+        colors.darknav = "#2e2a2a";
+        let theme = new Object;
+        theme.background = colors.darkbackground;
+        theme.card = colors.darkcard;
+        theme.nav = colors.darknav;
+        theme.insert = "transparent";
+        inititemsholders();
+        initPosts();
+        initExtra();
+        getData(false);
+        getPost(false,false);
+        continuallyLoad();
+        menuChose("Donate");
+
+        function inititemsholders() {
+            let post = document.getElementById("itemsholders");
+            post.style.backgroundColor = "transparent";
+            post.style.position = "absolute";
+            post.style.height = "auto";
+            //post.style.marginTop = "4px";
+            post.style.borderRadius = "10px";
+            post.style.left = (window.innerWidth - 600) / 2 +"px";
+            post.style.top = document.getElementById("navbar").offsetHeight + 4 + "px";
+            $(window).scroll(function () {
+                if ($(window).scrollTop() + $(window).height() == $(document).height()) {
+                    if (lockedlistings) { return; }
+                    getData(true);
+                    lockedlistings = true;
+                    setTimeout(() => {
+                        lockedlistings = false;
+                    }, 1000);
+                }
+            });
+        }
+        function initPosts() {
+            let posts = document.getElementById("posts");
+            posts.style.position = "fixed";
+            posts.style.height = window.innerHeight - posts.offsetTop - 30 + "px";
+            posts.style.width = "300px";
+            posts.style.overflowY = "scroll";
+            posts.style.borderRadius = "10px";
+            posts.style.top = document.getElementById("navbar").offsetHeight + 4 + "px";
+            posts.style.marginLeft = "10px";
+            posts.onscroll = function () {
+                //console.log(posts.scrollTop+" "+(posts.scrollHeight-posts.offsetHeight));
+                if (posts.scrollTop+100 >= (posts.scrollHeight - posts.offsetHeight)) {
+                    console.log("End Reached, Post");
+                    if (lockedupdate) { return; }
+                    getPost(true);
+                    lockedupdate = true;
+                    setTimeout(() => {
+                        lockedupdate = false;
+                    }, 1000);
+                }
+            }
+        }
+
+        function initExtra(){
+            let extra = document.getElementById("extra");
+            let posts = document.getElementById("posts");
+            extra.style.position = "fixed";
+            extra.style.top = posts.offsetTop+"px";
+            extra.style.height = posts.offsetHeight+"px";;
+            extra.style.backgroundColor = theme.insert;
+            extra.style.width = posts.offsetWidth+"px";;
+            extra.style.right = "5px";
+            extra.style.borderRadius = "10px";
+        }
+        function continuallyLoad(){
+            setInterval(() => {
+                if(document.getElementById("posts").scrollTop==0){
+                    getPost(false,true);
+                }   
+            }, 5000);
+
+            setInterval(() => {
+                if(window.scrollTop==0){
+                getData(false);
+                }
+            }, 5000);
+        }
+
+        function menuChose(menu){
+            clearInserts();
+            if(menu=="Donate"){
+                document.getElementById(menu).style.backgroundColor="grey";
+                document.getElementById("Charity").style.backgroundColor="transparent";
+                document.getElementById("News").style.backgroundColor="transparent";
+                getInserts(menu);
+            return;
+            }
+            if(menu=="Charity"){
+                document.getElementById(menu).style.backgroundColor="grey";
+                document.getElementById("Donate").style.backgroundColor="transparent";
+                document.getElementById("News").style.backgroundColor="transparent";
+                getInserts(menu);
+                return;}
+            if(menu=="News"){
+                document.getElementById(menu).style.backgroundColor="grey";
+                document.getElementById("Charity").style.backgroundColor="transparent";
+                document.getElementById("Donate").style.backgroundColor="transparent";
+                getInserts(menu);
+                return;}
+        }
+
+        ///oldcodevv
+        document.getElementById("search").onkeypress = function (event) {
+            if (event.keyCode == 13) {
+                if (isEmpty(getel("search").value)) { Reset(); showAll(); }
+                Reset();
+                showMatching(document.getElementById("search").value);
+            }
+        };
+        function showYours() {
+            Reset();
+            showMatching(_user_[0]);
+        }
+        async function uploadFile(file) {
+            let formData = new FormData();
+            formData.append("file", file);
+            await fetch('upload.php', {
+                method: "POST",
+                body: formData
+            });
+        }
+        function Reset() {
+            var listings = document.getElementsByClassName("listing");
+            if (listings.length > 0) { listings[0].remove(); Reset(); }
+        }
+        function createUser(username, password) {
+            _user_ = createNewUser(username, password);
+            _logincheck = 0;
+            checkForSignUp();
+        }
+        function checkForSignUp() {
+            var msg = document.getElementById("errortext");
+            if (_logincheck <= 5) {
+                if (_user_[0] == undefined) {
+                    msg.style.color = "red";
+                    msg.innerHTML = "Attempting to create account. " + _logincheck;
+                } else {
+                    msg.style.color = "green";
+                    msg.innerHTML = "Success";
+                    enableUserFunction();
+                    return;
+                }
+                _logincheck++;
+                setTimeout(function () { checkForSignUp() }, 1000);
+            } else {
+                if (_user_[0] == undefined) {
+                    msg.style.color = "red";
+                    msg.innerHTML = "A user by that name already exists or network error.";
+                    _logincheck = 0;
+                    return;
+                } else {
+                    msg.style.color = "green";
+                    msg.innerHTML = "Success";
+                    enableUserFunction();
+                }
+            }
+        }
+        function checkForLogin() {
+            var msg = document.getElementById("errortext");
+            if (_logincheck <= 5) {
+                if (_user_[0] == undefined) {
+                    msg.style.color = "red";
+                    msg.innerHTML = "Attempting to log in " + _logincheck;
+                } else {
+                    msg.style.color = "green";
+                    msg.innerHTML = "Success";
+                    enableUserFunction();
+                    return;
+                }
+                _logincheck++;
+                setTimeout(function () { checkForLogin() }, 1000);
+            } else {
+                if (_user_[0] == undefined) {
+                    msg.style.color = "red";
+                    msg.innerHTML = "Credentials incorrect or network issues.";
+                    _logincheck = 0;
+                    return;
+                } else {
+                    msg.style.color = "green";
+                    msg.innerHTML = "Success";
+                    enableUserFunction();
+                }
+            }
+        }
+        function liveNotify() {
+            document.getElementById("profile").textContent = _user_[0];
+            setInterval(() => {
+                getNotifications(_user_[0]);
+            }, 5000);
+        }
+        function enableUserFunction() {
+            document.getElementById("addlisting").style.display = "inline-block";
+            document.getElementById("seeyourlistings").style.display = "inline-block";
+            document.getElementById("lgsu").style.display = "none";
+            document.getElementById("blackout").style.display = "none";
+            document.getElementById("btnlogin").style.display = "none";
+            document.getElementById("profile").style.display = "inline-block";
+            liveNotify();
+        }
+        doublechecking = false;
+        function onResize() {
+            if (window.innerWidth > (660)) {
+                document.getElementById("itemsholders").style.width = "600px";
+                let posts = document.getElementById("posts");
+            posts.style.position = "fixed";
+            posts.style.width = "300px";
+            posts.style.overflowY = "scroll";
+            posts.style.top = document.getElementById("navbar").offsetHeight + 4 + "px";
+            posts.style.marginLeft = "10px";
+            document.getElementById("itemsholders").style.left = (window.innerWidth - 600) / 2 +"px";
+            posts.style.height = window.innerHeight - posts.offsetTop +15+ "px";
+                document.getElementById("extra").style.display = "block";
+                document.getElementById("posts").style.display = "block";
+                document.getElementById("itemsholders").style.height = window.innerHeight - 41 + "px";
+                document.getElementById("about").style.display = "inline-block";
+                document.getElementById("beapart").style.display = "inline-block";
+            }
+            if (window.innerWidth < (660 + 440) && window.innerWidth > (660)) {
+                document.getElementById("itemsholders").style.width = "660px";
+                document.getElementById("extra").style.display = "none";;
+                var p = document.getElementById("posts");
+                p.style.display = "block";
+                p.style.position = "fixed";
+                // p.style.position = "fixed";
+                // p.style.width = "440px";
+                // p.style.top = "40px";
+                // p.style.height = "100%";
+                // p.style.left = "677.5px";
+            }
+            if (window.innerWidth < (660 + 440)) {
+                document.getElementById("extra").style.display = "none";
+                document.getElementById("itemsholders").style.height = "100%";
+                document.getElementById("itemsholders").style.width = "100%";
+                document.getElementById("itemsholders").style.left = "0px";
+                document.getElementById("posts").style.display = "block";
+                document.getElementById("posts").style.position = "static";
+                document.getElementById("posts").style.width = "100%";
+                document.getElementById("posts").style.marginTop = "10px";
+                document.getElementById("posts").style.height = "auto";
+                document.getElementById("itemsholders").style.paddingBottom = 40 + "px";
+                document.getElementById("itemsholders").style.position = "relative";
+                document.getElementById("about").style.display = "none";
+                document.getElementById("beapart").style.display = "none";
+            }
+            if (doublechecking) { doublechecking = false; return; }
+            setTimeout(() => {
+                doublechecking = true;
+                onResize();
+            }, 1000);
+        }
+    </script>
+</body>
+
+</html>
